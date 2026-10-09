@@ -11,10 +11,31 @@ $ProcessedDataDir = "data/openarm_processed"
 $TrainTxt = "assets/training_data/openarm_train.txt"
 $NormStats = "assets/norm_stats/openarm_dual.json"
 $TrainConfig = "configs/vla/real_robot/openarm_expert_4090.yaml"
+$ModelsDir = "models"
+
+Write-Host "==========================================================" -ForegroundColor Cyan
+Write-Host "  0. KIỂM TRA & TẢI BASE PRETRAINED MODELS                " -ForegroundColor Cyan
+Write-Host "==========================================================" -ForegroundColor Cyan
+if (-not (Test-Path $ModelsDir)) { New-Item -ItemType Directory -Path $ModelsDir | Out-Null }
+
+if (-not (Test-Path "$ModelsDir/lingbot-vla-v2-6b")) {
+    Write-Host "[*] Đang tải lingbot-vla-v2-6b..." -ForegroundColor Yellow
+    python scripts/download_hf_model.py --repo_id robbyant/lingbot-vla-v2-6b --local_dir $ModelsDir
+} else {
+    Write-Host "[+] Đã tồn tại $ModelsDir/lingbot-vla-v2-6b" -ForegroundColor Green
+}
+
+if (-not (Test-Path "$ModelsDir/Qwen3-VL-4B-Instruct")) {
+    Write-Host "[*] Đang tải Qwen3-VL-4B-Instruct..." -ForegroundColor Yellow
+    python scripts/download_hf_model.py --repo_id Qwen/Qwen3-VL-4B-Instruct --local_dir $ModelsDir
+} else {
+    Write-Host "[+] Đã tồn tại $ModelsDir/Qwen3-VL-4B-Instruct" -ForegroundColor Green
+}
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host "  1. TẢI DATASET TỪ HUGGINGFACE: $RepoId" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
+
 
 if (-not (Test-Path $RawDataDir)) { New-Item -ItemType Directory -Path $RawDataDir | Out-Null }
 

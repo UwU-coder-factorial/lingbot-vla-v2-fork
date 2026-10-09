@@ -15,11 +15,32 @@ PROCESSED_DATA_DIR="data/openarm_processed"
 TRAIN_TXT="assets/training_data/openarm_train.txt"
 NORM_STATS="assets/norm_stats/openarm_dual.json"
 TRAIN_CONFIG="configs/vla/real_robot/openarm_expert_4090.yaml"
+MODELS_DIR="models"
+
+echo "=========================================================="
+echo "  0. KIỂM TRA & TẢI BASE PRETRAINED MODELS"
+echo "=========================================================="
+mkdir -p "$MODELS_DIR"
+
+if [ ! -d "$MODELS_DIR/lingbot-vla-v2-6b" ]; then
+    echo "[*] Đang tải lingbot-vla-v2-6b..."
+    python scripts/download_hf_model.py --repo_id robbyant/lingbot-vla-v2-6b --local_dir "$MODELS_DIR"
+else
+    echo "[+] Đã tồn tại $MODELS_DIR/lingbot-vla-v2-6b"
+fi
+
+if [ ! -d "$MODELS_DIR/Qwen3-VL-4B-Instruct" ]; then
+    echo "[*] Đang tải Qwen3-VL-4B-Instruct..."
+    python scripts/download_hf_model.py --repo_id Qwen/Qwen3-VL-4B-Instruct --local_dir "$MODELS_DIR"
+else
+    echo "[+] Đã tồn tại $MODELS_DIR/Qwen3-VL-4B-Instruct"
+fi
 
 echo "=========================================================="
 echo "  1. TẢI DATASET TỪ HUGGINGFACE: $REPO_ID"
 echo "=========================================================="
 mkdir -p "$RAW_DATA_DIR"
+
 
 if command -v huggingface-cli &> /dev/null; then
     echo "[*] Sử dụng huggingface-cli download..."
