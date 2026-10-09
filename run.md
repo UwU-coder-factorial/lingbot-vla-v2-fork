@@ -86,3 +86,4 @@ powershell -ExecutionPolicy Bypass -File scripts/train_remote_openarm.ps1
   ```bash
   python scripts/open_loop_eval.py --config configs/vla/real_robot/openarm_expert_4090.yaml
   ```
+
