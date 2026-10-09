@@ -1,0 +1,57 @@
+# OpenArm Robot Configuration
+# 16 DoF: 2 arms × 7 DoF + 2 grippers
+# 1 camera: chest_rgb → camera_top
+#
+# Raw dataset keys (LeRobot format):
+#   observation.state: [16] float32  (qpos)
+#   action: [16] float32             (target qpos)
+#   observation.images.chest_rgb: [240, 424, 3] uint8
+#
+# Nếu key trong LeRobot dataset khác, sửa origin_keys cho phù hợp.
+
+states:
+  - observation.state.arm.position:
+      origin_keys:
+        - observation.state:
+            start: 0
+            end: 7       # left arm 7 DoF
+        - observation.state:
+            start: 8
+            end: 15      # right arm 7 DoF
+
+  - observation.state.effector.position:
+      origin_keys:
+        - observation.state:
+            start: 7
+            end: 8       # left gripper
+        - observation.state:
+            start: 15
+            end: 16      # right gripper
+
+actions:
+  - action.arm.position:
+      origin_keys:
+        - action:
+            start: 0
+            end: 7
+        - action:
+            start: 8
+            end: 15
+      subtract_state: true    # delta action cho arms (recommended cho real robot)
+
+  - action.effector.position:
+      origin_keys:
+        - action:
+            start: 7
+            end: 8
+        - action:
+            start: 15
+            end: 16
+      subtract_state: false   # absolute action cho grippers
+
+images:
+  - observation.images.camera_top:
+      origin_keys: observation.images.chest_rgb
+
+norm_stats: assets/norm_stats/openarm.json
+
