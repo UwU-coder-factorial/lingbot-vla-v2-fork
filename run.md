@@ -52,10 +52,16 @@ python tests/test_openarm_suite.py
 
 *Khi màn hình báo `OK (17/17 PASSED)` là hệ thống sẵn sàng huấn luyện.*
 
+---
+
 ## 4. Huấn Luyện Thực Tế (Training Pipeline)
 
-### Trường hợp 1: Data ĐÃ CÓ SẴN trên máy (Bỏ qua tải HuggingFace)
-Truyền trực tiếp đường dẫn thư mục chứa các file `.hdf5`:
+### Cách 1: Chạy 1-Click tự động (Khuyến nghị)
+
+Script tự động nhận diện data/model, tiền xử lý và chạy train:
+
+#### TH 1.1: Data ĐÃ CÓ SẴN trên máy (Bỏ qua tải HuggingFace)
+Truyền trực tiếp đường dẫn thư mục chứa các file `.hdf5` / `.h5`:
 
 * **Trên Linux**:
   ```bash
@@ -66,10 +72,10 @@ Truyền trực tiếp đường dẫn thư mục chứa các file `.hdf5`:
 
 * **Trên Windows PowerShell**:
   ```powershell
-  powershell -ExecutionPolicy Bypass -File scripts/train_remote_openarm.ps1 -DataDir "D:\path\to\data_co_san"
+  powershell -ExecutionPolicy Bypass -File scripts/train_remote_openarm.ps1 -DataDir "D:\duong_dan\data_co_san"
   ```
 
-### Trường hợp 2: Tải data tự động từ HuggingFace qua Mirror siêu tốc
+#### TH 1.2: Cần tải data tự động từ HuggingFace qua Mirror siêu tốc
 Nếu mạng chậm, dùng cờ `--use-mirror` để tải qua CDN hf-mirror.com / ModelScope:
 
 * **Trên Linux**:
@@ -82,10 +88,53 @@ Nếu mạng chậm, dùng cờ `--use-mirror` để tải qua CDN hf-mirror.com
   powershell -ExecutionPolicy Bypass -File scripts/train_remote_openarm.ps1 -UseMirror
   ```
 
-> [!NOTE]
-> **Tối ưu dung lượng model:** Script tải đã được tối ưu:
-> 1. Chỉ tải Tokenizer & Config của `Qwen3-VL-4B-Instruct` (~30MB), **bỏ qua 9GB weights thừa**.
-> 2. Bỏ qua các teacher thừa (`depth/`, `dino_video/`) của LingBot, tiết kiệm thêm ~4GB.
+#### TH 1.3: Model weights đã lưu sẵn ở thư mục khác (ổ cứng ngoài / SSD)
+* **Linux**:
+  ```bash
+  bash scripts/train_remote_openarm.sh --data-dir /path/to/data --model-dir /path/to/custom_models
+  ```
+* **Windows**:
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File scripts/train_remote_openarm.ps1 -DataDir "D:\data" -ModelDir "E:\models"
+  ```
+
+---
+
+### Cách 2: Chạy thủ công từng bước độc lập (Manual Steps)
+
+Nếu muốn tự kiểm soát từng bước:
+
+#### Bước 4.1: Tải Model Base (Đã tối ưu dung lượng)
+```bash
+# Tải LingBot-VLA 2.0 (tự động bỏ qua teacher thừa để giảm ~4GB)
+python scripts/download_hf_model.py --repo_id robbyant/lingbot-vla-v2-6b --local_dir models --use_mirror
+
+# Tải Qwen3-VL Tokenizer/Config (~30MB, bỏ qua 9GB weights thừa)
+python scripts/download_hf_model.py --repo_id Qwen/Qwen3-VL-4B-Instruct --local_dir models --use_mirror
+```
+
+#### Bước 4.2: Tiền xử lý & lọc dữ liệu
+```bash
+python tools/prepare_openarm_data.py \
+    --input_dir "/duong_dan/data_tho" \
+    --output_dir "data/openarm_processed" \
+    --txt_path "assets/training_data/openarm_train.txt"
+```
+
+#### Bước 4.3: Tính thống kê chuẩn hóa góc khớp (Norm Stats)
+```bash
+python scripts/compute_norm_stats.py \
+    --config configs/vla/norm_compute/post_data.yaml \
+    --data.train_path "assets/training_data/openarm_train.txt" \
+    --data.robot_config_root configs/robot_configs \
+    --data.robot_name openarm \
+    --data.norm_path "assets/norm_stats/openarm_dual.json"
+```
+
+#### Bước 4.4: Khởi chạy huấn luyện
+```bash
+python tasks/vla/train_lingbotvla.py --config configs/vla/real_robot/openarm_expert_4090.yaml
+```
 
 ---
 
@@ -100,5 +149,3 @@ Nếu mạng chậm, dùng cờ `--use-mirror` để tải qua CDN hf-mirror.com
   ```bash
   python scripts/open_loop_eval.py --config configs/vla/real_robot/openarm_expert_4090.yaml
   ```
-
-
