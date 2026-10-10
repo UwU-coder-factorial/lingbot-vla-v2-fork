@@ -52,26 +52,40 @@ python tests/test_openarm_suite.py
 
 *Khi màn hình báo `OK (17/17 PASSED)` là hệ thống sẵn sàng huấn luyện.*
 
----
+## 4. Huấn Luyện Thực Tế (Training Pipeline)
 
-## 4. Huấn Luyện Thực Tế 1-Click (All-in-One Training)
+### Trường hợp 1: Data ĐÃ CÓ SẴN trên máy (Bỏ qua tải HuggingFace)
+Truyền trực tiếp đường dẫn thư mục chứa các file `.hdf5`:
 
-Script tự động thực hiện từ A đến Z:
-1. Tải Base Pretrained Model (`lingbot-vla-v2-6b` và `Qwen3-VL-4B-Instruct`).
-2. Tải toàn bộ 45 episodes dataset OpenArm từ HuggingFace (`Tuyen062004/data_openarm_8_10`).
-3. Tiền xử lý, lọc bỏ NaN, định dạng HDF5 chuẩn.
-4. Tính bảng thống kê chuẩn hóa góc khớp (`assets/norm_stats/openarm_dual.json`).
-5. Khởi chạy huấn luyện Action Expert (khóa VLM backbone, tối ưu VRAM trong ngưỡng 16–18 GB).
+* **Trên Linux**:
+  ```bash
+  bash scripts/train_remote_openarm.sh --data-dir /duong_dan/toi/thu_muc_data_co_san
+  # hoặc truyền tắt:
+  bash scripts/train_remote_openarm.sh /duong_dan/toi/thu_muc_data_co_san
+  ```
 
-### Trên Linux:
-```bash
-bash scripts/train_remote_openarm.sh
-```
+* **Trên Windows PowerShell**:
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File scripts/train_remote_openarm.ps1 -DataDir "D:\path\to\data_co_san"
+  ```
 
-### Trên Windows PowerShell:
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/train_remote_openarm.ps1
-```
+### Trường hợp 2: Tải data tự động từ HuggingFace qua Mirror siêu tốc
+Nếu mạng chậm, dùng cờ `--use-mirror` để tải qua CDN hf-mirror.com / ModelScope:
+
+* **Trên Linux**:
+  ```bash
+  bash scripts/train_remote_openarm.sh --use-mirror
+  ```
+
+* **Trên Windows PowerShell**:
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File scripts/train_remote_openarm.ps1 -UseMirror
+  ```
+
+> [!NOTE]
+> **Tối ưu dung lượng model:** Script tải đã được tối ưu:
+> 1. Chỉ tải Tokenizer & Config của `Qwen3-VL-4B-Instruct` (~30MB), **bỏ qua 9GB weights thừa**.
+> 2. Bỏ qua các teacher thừa (`depth/`, `dino_video/`) của LingBot, tiết kiệm thêm ~4GB.
 
 ---
 
@@ -86,4 +100,5 @@ powershell -ExecutionPolicy Bypass -File scripts/train_remote_openarm.ps1
   ```bash
   python scripts/open_loop_eval.py --config configs/vla/real_robot/openarm_expert_4090.yaml
   ```
+
 
