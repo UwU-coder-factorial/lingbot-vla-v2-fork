@@ -38,14 +38,14 @@ REQUIRED_PACKAGES = {
 MODELS_INFO = {
     "lingbot-vla-v2-6b": {
         "repo_id": "robbyant/lingbot-vla-v2-6b",
-        "size_gb": 25.6,
-        "desc": "Base model LingBot-VLA 2.0 (MoE 6B parameters)",
+        "size_gb": 23.77,
+        "desc": "Base model LingBot-VLA 2.0 (MoE 6B parameters, đã lọc bỏ teacher)",
         "check_files": ["model-00001-of-00006.safetensors", "model-00006-of-00006.safetensors"],
     },
     "Qwen3-VL-4B-Instruct": {
         "repo_id": "Qwen/Qwen3-VL-4B-Instruct",
-        "size_gb": 0.03,  # ~30MB tokenizer & configs
-        "desc": "Tokenizer & Processor của Qwen3-VL (đã cắt 9GB weights thừa)",
+        "size_gb": 0.01,  # ~11MB tokenizer & configs
+        "desc": "Tokenizer & Processor của Qwen3-VL (đã cắt 8.28GB weights thừa)",
         "check_files": ["tokenizer.json", "vocab.json"],
     },
 }
