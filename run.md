@@ -1,124 +1,87 @@
 # HƯỚNG DẪN TRIỂN KHAI VÀ HUẤN LUYỆN TRÊN MÁY MỚI (TURNKEY GUIDE)
 
-Tài liệu này cung cấp đầy đủ các bước từ lúc clone repository đến khi hoàn tất huấn luyện Action Expert cho robot OpenArm trên máy mới (yêu cầu tối thiểu: 1x RTX 4090 24GB).
+> [!IMPORTANT]
+> **DÀNH CHO NGƯỜI DÙNG MUỐN CHẠY NHANH (ALL-IN-ONE MASTER SCRIPT)**
+> Toàn bộ pipeline đã được gói gọn trong script duy nhất: tự động kiểm tra thư viện (hỏi [y/n]), tính dung lượng model cần tải (hỏi [y/n]), nạp dữ liệu từ thư mục chỉ định, tiền xử lý và khởi chạy huấn luyện.
 
 ---
 
-## 1. Clone Repository
+## ⚡ 1. KHỞI CHẠY NHANH: SCRIPT TỔNG ALL-IN-ONE (KHUYẾN NGHỊ)
 
-Mở terminal trên máy mới và chạy:
-
+Sau khi kéo repo về máy:
 ```bash
 git clone https://github.com/UwU-coder-factorial/lingbot-vla-v2-fork.git
 cd lingbot-vla-v2-fork
 ```
 
----
+Chạy ngay một trong các lệnh sau:
 
-## 2. Thiết Lập Môi Trường (Environment Setup)
-
-### Cách A: Kiểm tra nhanh môi trường có sẵn (Tránh cài đè / cài trùng)
-Nếu máy train đã có sẵn Conda hoặc môi trường Python:
+### Trường hợp A: Dữ liệu ĐÃ CÓ SẴN trong một thư mục trên máy
 ```bash
-# 1. Kiểm tra xem đã có đủ thư viện chưa
-python tools/check_environment.py
+# Trên Linux / Ubuntu:
+bash scripts/train_all_in_one.sh --data-dir /duong_dan/toi/thu_muc_data_cua_ban
 
-# 2. Hoặc tự động cài CHỈ các gói còn thiếu (không cài lại gói đã có)
-python tools/check_environment.py --install
+# Hoặc dùng Python trực tiếp (chạy được cả Windows / Linux / macOS):
+python scripts/train_all_in_one.py --data-dir /duong_dan/toi/thu_muc_data_cua_ban
+
+# Trên Windows PowerShell:
+powershell -ExecutionPolicy Bypass -File scripts/train_all_in_one.ps1 -data-dir "D:\path\to\data"
 ```
 
-### Cách B: Tạo môi trường mới từ đầu (Nếu máy chưa có gì)
+### Trường hợp B: Muốn tăng tốc độ tải mạng (Dùng CDN Mirror Châu Á)
 ```bash
-# Linux (Script tự động):
-bash tools/create_train_env.sh --env-name lingbotvla
-conda activate lingbotvla
-
-# Hoặc thủ công:
-conda create -n lingbotvla python=3.12 -y
-conda activate lingbotvla
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
-pip install h5py numpy huggingface_hub tqdm opencv-python transformers peft einops safetensors
+# Thêm cờ --use-mirror để tải model siêu tốc qua hf-mirror.com:
+bash scripts/train_all_in_one.sh --data-dir /duong_dan/data --use-mirror
 ```
 
+### Trường hợp C: Chạy tự động không cần hỏi (Tự động bấm 'y' mọi prompt)
+```bash
+bash scripts/train_all_in_one.sh --data-dir /duong_dan/data --use-mirror -y
+```
+
+### 📋 Quy trình 5 bước Script Tổng sẽ tự động thực hiện:
+1. **Kiểm tra thư viện**: Quét toàn bộ package (`torch`, `h5py`, `transformers`, `peft`...). Nếu đã có sẵn trên máy $\to$ **BỎ QUA, không cài đè**. Nếu thiếu $\to$ Liệt kê tên các gói và dung lượng ước tính, prompt `[y/n]` để người dùng xác nhận cài đặt.
+2. **Kiểm tra Model**: Quét thư mục `models/`. Nếu chưa có model $\to$ Báo dung lượng cụ thể (~25.6 GB cho LingBot 6B và ~30 MB cho Qwen3-VL tokenizer), prompt `[y/n]` trước khi bắt đầu tải.
+3. **Nạp Dữ liệu**: Quét các file `.hdf5` / `.h5` / `.npz` từ đường dẫn `--data-dir` bạn cung cấp.
+4. **Tiền xử lý & Chuẩn hóa**: Lọc bỏ NaN, chuẩn hóa vector 16-DoF, tính toán bảng phân phối góc khớp `assets/norm_stats/openarm_dual.json`.
+5. **Khởi chạy Huấn luyện**: Tự động nạp cấu hình tối ưu 1x RTX 4090 (đóng băng VLM, VRAM 16–18 GB) và train model.
 
 ---
 
-## 3. Kiểm Thử Hệ Thống (Smoke Test / Unit Tests)
+## 2. Kiểm Thử Hệ Thống Trước Khi Train (Tùy chọn)
 
-Trước khi train, chạy bộ test case (không mock) để xác nhận hệ thống và định dạng HDF5 tương thích 100%:
+Nếu muốn chạy kiểm thử smoke test (17/17 test cases bao phủ logic, kinematics 16-DoF, RAM budget, không dùng mock):
 
 ```bash
 # 1. Tải 1 tập dữ liệu mẫu từ HuggingFace về test (nhẹ, ~300MB)
 python tools/download_sample_data.py --num 1 --target_dir data/openarm_samples
 
-# 2. Chạy test suite (17/17 test cases bao phủ logic, kinematics 16-DoF, RAM budget)
+# 2. Chạy test suite
 python tests/test_openarm_suite.py
 ```
 
-*Khi màn hình báo `OK (17/17 PASSED)` là hệ thống sẵn sàng huấn luyện.*
-
 ---
 
-## 4. Huấn Luyện Thực Tế (Training Pipeline)
+## 3. Chạy Thủ Công Từng Bước Độc Lập (Nâng cao)
 
-### Cách 1: Chạy 1-Click tự động (Khuyến nghị)
+Nếu không dùng script tổng mà muốn tự kiểm soát từng giai đoạn:
 
-Script tự động nhận diện data/model, tiền xử lý và chạy train:
-
-#### TH 1.1: Data ĐÃ CÓ SẴN trên máy (Bỏ qua tải HuggingFace)
-Truyền trực tiếp đường dẫn thư mục chứa các file `.hdf5` / `.h5`:
-
-* **Trên Linux**:
-  ```bash
-  bash scripts/train_remote_openarm.sh --data-dir /duong_dan/toi/thu_muc_data_co_san
-  # hoặc truyền tắt:
-  bash scripts/train_remote_openarm.sh /duong_dan/toi/thu_muc_data_co_san
-  ```
-
-* **Trên Windows PowerShell**:
-  ```powershell
-  powershell -ExecutionPolicy Bypass -File scripts/train_remote_openarm.ps1 -DataDir "D:\duong_dan\data_co_san"
-  ```
-
-#### TH 1.2: Cần tải data tự động từ HuggingFace qua Mirror siêu tốc
-Nếu mạng chậm, dùng cờ `--use-mirror` để tải qua CDN hf-mirror.com / ModelScope:
-
-* **Trên Linux**:
-  ```bash
-  bash scripts/train_remote_openarm.sh --use-mirror
-  ```
-
-* **Trên Windows PowerShell**:
-  ```powershell
-  powershell -ExecutionPolicy Bypass -File scripts/train_remote_openarm.ps1 -UseMirror
-  ```
-
-#### TH 1.3: Model weights đã lưu sẵn ở thư mục khác (ổ cứng ngoài / SSD)
-* **Linux**:
-  ```bash
-  bash scripts/train_remote_openarm.sh --data-dir /path/to/data --model-dir /path/to/custom_models
-  ```
-* **Windows**:
-  ```powershell
-  powershell -ExecutionPolicy Bypass -File scripts/train_remote_openarm.ps1 -DataDir "D:\data" -ModelDir "E:\models"
-  ```
-
----
-
-### Cách 2: Chạy thủ công từng bước độc lập (Manual Steps)
-
-Nếu muốn tự kiểm soát từng bước:
-
-#### Bước 4.1: Tải Model Base (Đã tối ưu dung lượng)
+### Bước 3.1: Kiểm tra thư viện riêng lẻ
 ```bash
-# Tải LingBot-VLA 2.0 (tự động bỏ qua teacher thừa để giảm ~4GB)
-python scripts/download_hf_model.py --repo_id robbyant/lingbot-vla-v2-6b --local_dir models --use_mirror
+# Chỉ kiểm tra:
+python tools/check_environment.py
 
-# Tải Qwen3-VL Tokenizer/Config (~30MB, bỏ qua 9GB weights thừa)
+# Hoặc tự cài các gói còn thiếu:
+python tools/check_environment.py --install
+```
+
+### Bước 3.2: Tải Model riêng lẻ
+```bash
+python scripts/download_hf_model.py --repo_id robbyant/lingbot-vla-v2-6b --local_dir models --use_mirror
 python scripts/download_hf_model.py --repo_id Qwen/Qwen3-VL-4B-Instruct --local_dir models --use_mirror
 ```
 
-#### Bước 4.2: Tiền xử lý & lọc dữ liệu
+### Bước 3.3: Tiền xử lý dữ liệu OpenArm
 ```bash
 python tools/prepare_openarm_data.py \
     --input_dir "/duong_dan/data_tho" \
@@ -126,7 +89,7 @@ python tools/prepare_openarm_data.py \
     --txt_path "assets/training_data/openarm_train.txt"
 ```
 
-#### Bước 4.3: Tính thống kê chuẩn hóa góc khớp (Norm Stats)
+### Bước 3.4: Tính thống kê chuẩn hóa góc khớp (Norm Stats)
 ```bash
 python scripts/compute_norm_stats.py \
     --config configs/vla/norm_compute/post_data.yaml \
@@ -136,14 +99,14 @@ python scripts/compute_norm_stats.py \
     --data.norm_path "assets/norm_stats/openarm_dual.json"
 ```
 
-#### Bước 4.4: Khởi chạy huấn luyện
+### Bước 3.5: Huấn luyện Action Expert
 ```bash
 python tasks/vla/train_lingbotvla.py --config configs/vla/real_robot/openarm_expert_4090.yaml
 ```
 
 ---
 
-## 5. Theo Dõi và Kết Quả
+## 4. Theo Dõi và Kết Quả
 
 * **Giám sát VRAM**:
   ```bash
