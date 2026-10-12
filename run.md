@@ -17,24 +17,29 @@ cd lingbot-vla-v2-fork
 
 ## 2. Thiết Lập Môi Trường (Environment Setup)
 
-### Cách A: Dùng script tự động (Khuyến nghị cho Linux / Ubuntu)
+### Cách A: Kiểm tra nhanh môi trường có sẵn (Tránh cài đè / cài trùng)
+Nếu máy train đã có sẵn Conda hoặc môi trường Python:
 ```bash
-# Đảm bảo đã cài Conda / Miniconda
+# 1. Kiểm tra xem đã có đủ thư viện chưa
+python tools/check_environment.py
+
+# 2. Hoặc tự động cài CHỈ các gói còn thiếu (không cài lại gói đã có)
+python tools/check_environment.py --install
+```
+
+### Cách B: Tạo môi trường mới từ đầu (Nếu máy chưa có gì)
+```bash
+# Linux (Script tự động):
 bash tools/create_train_env.sh --env-name lingbotvla
 conda activate lingbotvla
-```
 
-### Cách B: Cài đặt thủ công qua Conda / Pip (Windows hoặc Linux)
-```bash
+# Hoặc thủ công:
 conda create -n lingbotvla python=3.12 -y
 conda activate lingbotvla
-
-# Cài đặt PyTorch tương thích CUDA
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
-
-# Cài đặt các thư viện bắt buộc cho robot data & training
-pip install h5py numpy huggingface_hub tqdm opencv-python transformers peft
+pip install h5py numpy huggingface_hub tqdm opencv-python transformers peft einops safetensors
 ```
+
 
 ---
 
