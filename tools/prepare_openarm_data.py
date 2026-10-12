@@ -5,12 +5,19 @@ Lọc bỏ mẫu lỗi / NaN và chuẩn hóa về cấu trúc dataset cho LingB
 """
 
 import os
+import sys
 import glob
 import argparse
 from pathlib import Path
 import numpy as np
 import h5py
 from tqdm import tqdm
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 
 try:
     import cv2
@@ -127,7 +134,7 @@ def process_dataset(input_dir, output_dir, txt_list_path, task_name="openarm_man
                 rgb = np.array(resized_rgb, dtype=np.uint8)
 
             # Lưu ra file HDF5 chuẩn hóa
-            out_file = Path(output_dir) / f"episode_{ep_idx:06d}.h5"
+            out_file = Path(output_dir) / f"episode_{len(valid_episodes):06d}.h5"
             with h5py.File(out_file, "w") as out_f:
                 out_f.create_dataset("observations/images/chest_rgb", data=rgb, compression="gzip")
                 if depth is not None:

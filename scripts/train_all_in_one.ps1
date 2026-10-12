@@ -9,3 +9,4 @@
 $ErrorActionPreference = "Stop"
 
 python scripts/train_all_in_one.py @args
+

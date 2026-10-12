@@ -16,3 +16,4 @@ if command -v python3 &> /dev/null; then
 fi
 
 $PYTHON_BIN scripts/train_all_in_one.py "$@"
+
