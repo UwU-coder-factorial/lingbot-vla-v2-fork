@@ -1,7 +1,12 @@
 import json
 import os
+import sys
 import re
 import time
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+
 from dataclasses import asdict, dataclass, field
 from functools import partial
 from io import BytesIO

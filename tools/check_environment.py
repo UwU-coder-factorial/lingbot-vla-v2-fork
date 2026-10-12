@@ -16,15 +16,21 @@ if hasattr(sys.stderr, "reconfigure"):
 
 REQUIRED_PACKAGES = {
     "torch": "torch",
+    "torchvision": "torchvision",
     "numpy": "numpy",
     "h5py": "h5py",
     "transformers": "transformers",
+    "datasets": "datasets",
     "huggingface_hub": "huggingface_hub",
     "tqdm": "tqdm",
     "cv2": "opencv-python",
     "peft": "peft",
     "einops": "einops",
     "safetensors": "safetensors",
+    "yaml": "pyyaml",
+    "scipy": "scipy",
+    "pandas": "pandas",
+    "torchdata": "torchdata",
 }
 
 OPTIONAL_PACKAGES = {

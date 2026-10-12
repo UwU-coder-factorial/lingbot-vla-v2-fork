@@ -18,7 +18,10 @@ import random
 from typing import TYPE_CHECKING, Callable, Iterator, List, Optional, Union
 
 from torch.utils.data import IterableDataset, Sampler
-from torchdata.stateful_dataloader import StatefulDataLoader
+try:
+    from torchdata.stateful_dataloader import StatefulDataLoader
+except ImportError:
+    from torch.utils.data import DataLoader as StatefulDataLoader
 
 from ..distributed.parallel_state import get_parallel_state
 from ..utils import logging
@@ -37,7 +40,10 @@ from .dynamic_batching import DynamicBatchSizeDataLoader
 
 if TYPE_CHECKING:
     from torch.utils.data import Dataset
-from torchdata.stateful_dataloader.sampler import StatefulDistributedSampler
+try:
+    from torchdata.stateful_dataloader.sampler import StatefulDistributedSampler
+except ImportError:
+    from torch.utils.data.distributed import DistributedSampler as StatefulDistributedSampler
 
 
 logger = logging.get_logger(__name__)

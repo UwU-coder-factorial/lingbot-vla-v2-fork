@@ -140,6 +140,7 @@ def process_dataset(input_dir, output_dir, txt_list_path, task_name="openarm_man
                 if depth is not None:
                     out_f.create_dataset("observations/images/chest_depth", data=depth, compression="gzip")
                 out_f.create_dataset("observation.qpos", data=qpos.astype(np.float32))
+                out_f.create_dataset("observation.state", data=qpos.astype(np.float32))
                 out_f.create_dataset("action", data=action.astype(np.float32))
 
             valid_episodes.append(str(out_file.resolve()))

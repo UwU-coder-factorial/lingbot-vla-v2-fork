@@ -228,6 +228,10 @@ def step_process_data_and_train(raw_data_dir: str, models_dir: str, yes_all: boo
     from tools.prepare_openarm_data import process_dataset
     process_dataset(str(raw_path), str(processed_dir), str(train_txt_path))
 
+    # Môi trường chạy subprocess (luôn kèm PYTHONPATH trỏ về PROJECT_ROOT)
+    run_env = os.environ.copy()
+    run_env["PYTHONPATH"] = str(PROJECT_ROOT) + (os.pathsep + run_env["PYTHONPATH"] if "PYTHONPATH" in run_env else "")
+
     # Tính norm stats nếu chưa có
     norm_stats_path = PROJECT_ROOT / "assets" / "norm_stats" / "openarm_dual.json"
     if not norm_stats_path.exists():
@@ -238,10 +242,10 @@ def step_process_data_and_train(raw_data_dir: str, models_dir: str, yes_all: boo
             "--config", str(PROJECT_ROOT / "configs" / "vla" / "norm_compute" / "post_data.yaml"),
             "--data.train_path", str(train_txt_path),
             "--data.robot_config_root", str(PROJECT_ROOT / "configs" / "robot_configs"),
-            "--data.robot_name", "openarm",
+            "--data.robot_name", "openarm_dual",
             "--data.norm_path", str(norm_stats_path),
         ]
-        ret = subprocess.call(norm_cmd)
+        ret = subprocess.call(norm_cmd, env=run_env)
         if ret != 0:
             print("[X] Lỗi khi tính toán Normalization Stats!")
             sys.exit(ret)
@@ -265,7 +269,7 @@ def step_process_data_and_train(raw_data_dir: str, models_dir: str, yes_all: boo
     ]
 
     print("\n[*] Bắt đầu quá trình huấn luyện...")
-    ret = subprocess.call(train_cmd)
+    ret = subprocess.call(train_cmd, env=run_env)
     if ret == 0:
         print("\n[+] HUẤN LUYỆN HOÀN TẤT THÀNH CÔNG!")
     else:

@@ -5,6 +5,9 @@ import sys
 import random
 from pathlib import Path
 from datetime import datetime, timedelta
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from tqdm import trange, tqdm
 from dataclasses import asdict, dataclass, field
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
@@ -24,7 +27,6 @@ from lingbotvla.utils.arguments import parse_args
 from lingbotvla.utils.dist_utils import all_reduce
 import lingbotvla.utils.normalize as normalize
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from tasks.vla.train_lingbotvla import MyTrainingArguments, MyDataArguments
 
 logger = helper.create_logger(__name__)
